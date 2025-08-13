@@ -1,5 +1,5 @@
 import os
-import openai
+from openai import OpenAI
 import streamlit as st
 
 # ---- Page config ----
@@ -8,8 +8,8 @@ st.set_page_config(page_title="Local ChatGPT", page_icon="🤖", layout="wide")
 # ---- Sidebar ----
 st.sidebar.title("⚙️ Settings")
 api_key = st.sidebar.text_input("Enter your OpenAI API Key", type="password")
-if api_key:
-    openai.api_key = api_key
+
+client = OpenAI(api_key=api_key) if api_key else None
 
 # ---- Session state initialization ----
 if "messages" not in st.session_state:
@@ -31,7 +31,7 @@ with col1:
 with col2:
     if st.button("New Chat", use_container_width=True):
         reset_chat()
-        st.rerun()  # ✅ Updated from st.experimental_rerun()
+        st.rerun()
 
 # ---- Chat render ----
 for m in st.session_state.messages:
@@ -46,16 +46,15 @@ for m in st.session_state.messages:
 if prompt := st.chat_input("Type your message"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    if not api_key:
+    if not client:
         st.warning("Please enter your OpenAI API key in the sidebar.")
     else:
         try:
-            # ---- Call OpenAI Chat API ----
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=st.session_state.messages
             )
-            reply = response.choices[0].message["content"]
+            reply = response.choices[0].message.content
         except Exception as e:
             reply = f"⚠️ API Error: {e}"
 
