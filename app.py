@@ -1,4 +1,3 @@
-
 import os
 import json
 import time
@@ -16,7 +15,12 @@ st.set_page_config(page_title="Local ChatGPT", page_icon="💬", layout="wide")
 # ---- Sidebar Controls ----
 with st.sidebar:
     st.title("⚙️ Settings")
-    api_key = st.text_input("OpenAI API Key", type="password", value=os.getenv("OPENAI_API_KEY", ""))
+    env_api_key = os.getenv("OPENAI_API_KEY", "")
+    if env_api_key:
+        api_key = env_api_key
+        st.success("Using API key from environment")
+    else:
+        api_key = st.text_input("OpenAI API Key", type="password")
     model = st.selectbox("Model", ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1"])  # adjust to your access
     temperature = st.slider("Temperature", 0.0, 1.5, 0.7, 0.1)
     streaming = st.toggle("Stream responses", value=True)
@@ -51,12 +55,12 @@ with col1:
 with col2:
     if st.button("New Chat", use_container_width=True):
         reset_chat()
-        st.rerun()
+        st.experimental_rerun()
 
 # ---- Chat render ----
 for m in st.session_state.messages:
-    with st.chat_message(m["role" ]):
-        st.markdown(m["content" ])
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
 
 # ---- User input ----
 user_input = st.chat_input("Type your message...")
@@ -146,7 +150,6 @@ if user_input and client:
             )
             collected = []
             need_tools = False
-            tool_buffer: List[Dict[str, Any]] = []
             placeholder = st.empty()
             text = ""
             for chunk in tmp:
